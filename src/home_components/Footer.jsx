@@ -247,16 +247,10 @@ export default function PremiumFooter() {
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-lg opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
                 <div className="relative w-full h-48 rounded-2xl overflow-hidden border border-white/10 backdrop-blur-sm shadow-2xl group-hover:scale-105 transition-transform duration-300">
-                  <iframe
-                    title="Google Map"
-                    src="https://www.google.com/maps/embed?pb=..."
-                    width="100%"
-                    height="100%"
-                    allowFullScreen=""
-                    loading="lazy"
-                    className="border-none grayscale group-hover:grayscale-0 transition-all duration-500"
-                  ></iframe>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                  <div className="flex items-center gap-2">
+                    <FaMapMarkerAlt className="text-red-500" />
+                    <span>123 Nguyễn Văn Cừ, Q.5, TP.HCM</span>
+                  </div>
                 </div>
               </div>
             </div>
