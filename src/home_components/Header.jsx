@@ -1,9 +1,20 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user"));
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,13 +24,51 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const handleStorage = () => {
+      setUser(JSON.parse(localStorage.getItem("user")));
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const navItems = [
+    { id: "home", label: "Trang chủ", href: "/" },
+    { id: "about", label: "Giới thiệu", href: "#about" },
+    { id: "rooms", label: "Danh sách phòng", href: "#rooms" },
+    { id: "guide", label: "Hướng dẫn", href: "#guide" },
+    { id: "contact", label: "Liên hệ", href: "#contact" },
+  ];
+
+  useEffect(() => {
+    // Cập nhật activeSection khi route thay đổi
+    if (location.pathname === "/") {
+      setActiveSection("home");
+    }
+  }, [location.pathname]);
+
   const handleMobileMenuToggle = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const handleNavClick = (section) => {
+  const handleNavClick = (section, href) => {
     setActiveSection(section);
     setIsMobileMenuOpen(false);
+    if (href.startsWith("#")) {
+      // Cuộn đến section trên trang
+      const el = document.querySelector(href);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      navigate(href);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
   };
 
   return (
@@ -35,7 +84,7 @@ export default function Header() {
           {/* Logo Section */}
           <div className="flex items-center gap-3 group">
             <button
-              onClick={() => handleNavClick("home")}
+              onClick={() => handleNavClick("home", "/")}
               className="flex items-center gap-3 transform transition-all duration-300 hover:scale-105"
             >
               <div className="relative">
@@ -59,16 +108,10 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
-            {[
-              { id: "home", label: "Trang chủ", href: "/" },
-              { id: "about", label: "Giới thiệu", href: "#about" },
-              { id: "rooms", label: "Danh sách phòng", href: "#rooms" },
-              { id: "guide", label: "Hướng dẫn", href: "#guide" },
-              { id: "contact", label: "Liên hệ", href: "#contact" },
-            ].map((item) => (
+            {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                onClick={() => handleNavClick(item.id, item.href)}
                 className={`relative px-4 py-2 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 ${
                   activeSection === item.id
                     ? "text-blue-700 bg-blue-50"
@@ -120,29 +163,51 @@ export default function Header() {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
             </button>
 
-            {/* Login Button */}
-            <button
-              onClick={() => handleNavClick("login")}
-              className="group relative px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <div className="relative flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 transform group-hover:rotate-12 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
+            {/* Login/User Button */}
+            {user ? (
+              <div className="flex items-center gap-3">
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-10 h-10 rounded-full border-2 border-blue-500 shadow"
+                />
+                <div className="flex flex-col text-right">
+                  <span className="font-semibold text-blue-900">
+                    {user.name}
+                  </span>
+                  <span className="text-xs text-gray-500">{user.role}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="ml-3 px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <span>Đăng nhập</span>
+                  Đăng xuất
+                </button>
               </div>
-            </button>
+            ) : (
+              <button
+                onClick={() => navigate("/login")}
+                className="group relative px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-purple-600 text-white font-bold shadow-lg hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:scale-105 hover:-translate-y-0.5 overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-blue-600 to-blue-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 transform group-hover:rotate-12 transition-transform"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  <span>Đăng nhập</span>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -201,36 +266,10 @@ export default function Header() {
       >
         <div className="px-4 py-6 bg-white/98 backdrop-blur-lg border-t border-gray-200/50 shadow-lg">
           <div className="space-y-3">
-            {[
-              {
-                id: "home",
-                label: "Trang chủ",
-                icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-              },
-              {
-                id: "about",
-                label: "Giới thiệu",
-                icon: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
-              },
-              {
-                id: "rooms",
-                label: "Danh sách phòng",
-                icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
-              },
-              {
-                id: "guide",
-                label: "Hướng dẫn",
-                icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
-              },
-              {
-                id: "contact",
-                label: "Liên hệ",
-                icon: "M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z",
-              },
-            ].map((item) => (
+            {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                onClick={() => handleNavClick(item.id, item.href)}
                 className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
                   activeSection === item.id
                     ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 shadow-md"
@@ -256,7 +295,7 @@ export default function Header() {
 
             {/* Mobile Login Button */}
             <button
-              onClick={() => handleNavClick("login")}
+              onClick={() => handleNavClick("login", "/login")}
               className="w-full mt-4 px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-purple-600 text-white font-bold shadow-lg transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
             >
               <svg

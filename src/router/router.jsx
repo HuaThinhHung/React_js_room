@@ -11,19 +11,37 @@ import AdminRoomTable from "../admin_components/AdminRoomTable";
 import { HelmetProvider } from "react-helmet-async";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import PrivateRoute from "./PrivateRoute";
+import AuthGuard from "./AuthGuard";
 
 const routes = [
-  { path: "/", element: <Home /> },
-  { path: "/room/:id", element: <RoomDetail /> },
+  {
+    path: "/",
+    element: (
+      <AuthGuard>
+        <Home />
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "/room/:id",
+    element: (
+      <AuthGuard>
+        <RoomDetail />
+      </AuthGuard>
+    ),
+  },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   {
     path: "/admin/*",
-    element: <Admin />,
+    element: (
+      <PrivateRoute>
+        <Admin />
+      </PrivateRoute>
+    ),
     children: [
-      { path: "rooms", element: <AdminRoomTable /> },
-      // { path: "users", element: <AdminUserTable /> },
-      // { path: "bookings", element: <AdminBookingTable /> },
+      // { path: "rooms", element: <AdminRoomTable /> }, // Đã xóa để tránh lặp
       { path: "*", element: <Navigate to="/admin" replace /> },
     ],
   },

@@ -16,3 +16,6 @@ export const createUser = (data) => axios.post(`${BASE_URL}/users`, data);
 export const updateUser = (id, data) =>
   axios.put(`${BASE_URL}/users/${id}`, data);
 export const deleteUser = (id) => axios.delete(`${BASE_URL}/users/${id}`);
+
+export const loginUser = (name, password) =>
+  axios.get(`${BASE_URL}/users`, { params: { name, password } });

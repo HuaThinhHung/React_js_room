@@ -1,13 +1,40 @@
 import React, { useState } from "react";
+import { loginUser } from "../utils/api";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  // Xóa useEffect tự động redirect
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Gọi API đăng nhập
-    alert("Đăng nhập thành công (demo)");
+    setLoading(true);
+    setError("");
+    try {
+      const res = await loginUser(username, password);
+      if (res.data && res.data.length > 0) {
+        const user = res.data[0];
+        localStorage.setItem("user", JSON.stringify(user));
+        toast.success("Đăng nhập thành công!");
+        if (user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      } else {
+        setError("Sai tên đăng nhập hoặc mật khẩu!");
+      }
+    } catch {
+      setError("Có lỗi xảy ra, vui lòng thử lại!");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,9 +73,11 @@ export default function Login() {
         <button
           type="submit"
           className="w-full py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg transition"
+          disabled={loading}
         >
-          Đăng nhập
+          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
         </button>
+        {error && <div className="text-red-500 text-center mt-3">{error}</div>}
         <div className="mt-4 text-center text-sm">
           Chưa có tài khoản?{" "}
           <a href="/register" className="text-blue-700 hover:underline">
