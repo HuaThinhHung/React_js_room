@@ -3,7 +3,8 @@ import { Outlet } from "react-router-dom";
 import AdminSidebar from "../admin_components/AdminSidebar";
 import AdminRoomTable from "../admin_components/AdminRoomTable";
 import AdminRoomForm from "../admin_components/AdminRoomForm";
-// import AdminUserTable from "../admin_components/AdminUserTable";
+import AdminUserTable from "../admin_components/AdminUserTable";
+import AdminUserForm from "../admin_components/AdminUserForm";
 // import AdminBookingTable from "../admin_components/AdminBookingTable";
 import { getRooms } from "../utils/api";
 
@@ -17,6 +18,8 @@ export default function Admin() {
     totalViews: 0,
     featuredRooms: 0,
   });
+  const [editingUser, setEditingUser] = useState(undefined);
+  const [refreshUser, setRefreshUser] = useState(0);
 
   // Lấy dữ liệu dashboard
   useEffect(() => {
@@ -74,6 +77,18 @@ export default function Admin() {
             room={editingRoom}
             onClose={() => setShowForm(false)}
             onSave={handleSuccess}
+          />
+        )}
+        {/* Table quản lý user */}
+        <AdminUserTable
+          onEdit={(user) => setEditingUser(user)}
+          refresh={refreshUser}
+        />
+        {editingUser !== undefined && (
+          <AdminUserForm
+            user={editingUser}
+            onClose={() => setEditingUser(undefined)}
+            onSuccess={() => setRefreshUser((r) => r + 1)}
           />
         )}
         <Outlet />

@@ -37,7 +37,7 @@ export default function Header() {
     { id: "about", label: "Giới thiệu", href: "#about" },
     { id: "rooms", label: "Danh sách phòng", href: "#rooms" },
     { id: "guide", label: "Hướng dẫn", href: "#guide" },
-    { id: "contact", label: "Liên hệ", href: "#contact" },
+    { id: "contact", label: "Liên hệ", href: "#footer" },
   ];
 
   useEffect(() => {

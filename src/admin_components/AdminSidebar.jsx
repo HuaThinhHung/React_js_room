@@ -199,7 +199,7 @@ export default function AdminSidebar({ onLogout, className }) {
           >
             <div className="relative">
               <img
-                src="https://cdn-icons-png.flaticon.com/512/1946/1946436.png"
+                src="logo.png"
                 className="h-10 w-10 rounded-lg shadow-lg"
                 alt="RoomStay Logo"
               />

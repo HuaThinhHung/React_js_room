@@ -14,14 +14,12 @@ import "leaflet/dist/leaflet.css";
 import PrivateRoute from "./PrivateRoute";
 import AuthGuard from "./AuthGuard";
 
+const user = JSON.parse(localStorage.getItem("user"));
+
 const routes = [
   {
     path: "/",
-    element: (
-      <AuthGuard>
-        <Home />
-      </AuthGuard>
-    ),
+    element: <Home />,
   },
   {
     path: "/room/:id",
@@ -31,8 +29,22 @@ const routes = [
       </AuthGuard>
     ),
   },
-  { path: "/login", element: <Login /> },
-  { path: "/register", element: <Register /> },
+  {
+    path: "/login",
+    element: !user ? (
+      <Login />
+    ) : (
+      <Navigate to={user?.role === "admin" ? "/admin" : "/"} replace />
+    ),
+  },
+  {
+    path: "/register",
+    element: !user ? (
+      <Register />
+    ) : (
+      <Navigate to={user?.role === "admin" ? "/admin" : "/"} replace />
+    ),
+  },
   {
     path: "/admin/*",
     element: (
@@ -40,10 +52,7 @@ const routes = [
         <Admin />
       </PrivateRoute>
     ),
-    children: [
-      // { path: "rooms", element: <AdminRoomTable /> }, // Đã xóa để tránh lặp
-      { path: "*", element: <Navigate to="/admin" replace /> },
-    ],
+    children: [{ path: "*", element: <Navigate to="/admin" replace /> }],
   },
   { path: "*", element: <NotFound /> },
 ];
