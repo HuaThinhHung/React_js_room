@@ -33,11 +33,8 @@ function FeaturedRooms({ rooms, loading }) {
   const [priceFilter, setPriceFilter] = React.useState("all");
   const [sortBy, setSortBy] = React.useState("default");
 
-  // Lọc phòng nổi bật, nếu không có thì lấy top 6 phòng rating cao nhất
-  const featuredRooms =
-    rooms.filter((r) => r.isFeatured).length > 0
-      ? rooms.filter((r) => r.isFeatured)
-      : [...rooms].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  // Hiển thị toàn bộ phòng
+  const featuredRooms = rooms;
 
   // Lấy danh sách khu vực duy nhất
   const areaList = Array.from(new Set(featuredRooms.map((room) => room.area)));
