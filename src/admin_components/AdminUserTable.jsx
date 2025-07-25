@@ -645,7 +645,7 @@ export default function AdminUserTable({ onEdit, refresh }) {
 
                     return (
                       <tr
-                        key={user.id}
+                        key={user.id || user.email || user.name}
                         className="hover:bg-gray-50 transition-colors"
                       >
                         <td className="px-4 py-3">
@@ -749,7 +749,10 @@ export default function AdminUserTable({ onEdit, refresh }) {
             {/* Mobile Card View */}
             <div className="lg:hidden space-y-4">
               {pagedUsers.map((user) => (
-                <UserCard key={user.id} user={user} />
+                <UserCard
+                  key={user.id || user.email || user.name}
+                  user={user}
+                />
               ))}
             </div>
 

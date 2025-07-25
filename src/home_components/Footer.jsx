@@ -249,7 +249,7 @@ export default function PremiumFooter() {
                 <div className="relative w-full h-48 rounded-2xl overflow-hidden border border-white/10 backdrop-blur-sm shadow-2xl group-hover:scale-105 transition-transform duration-300">
                   <iframe
                     title="Google Map"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4842879737084!2d106.6812460152601!3d10.774971962215085!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752ecf41691e4f%3A0x1c93c4b0a3f7ef84!2zMTIzIE5ndXnhu4VuIFbEg24gQ8awLCBQaMaw4budbmcgMywgUXXDoW4gNSwgVGjDoG5oIHBo4buRIFbhuqFuLCBWaWV0bmFt!5e0!3m2!1sen!2s!4v1626699428293!5m2!1sen!2s"
+                    src="https://www.google.com/maps/embed?pb=..."
                     width="100%"
                     height="100%"
                     allowFullScreen=""
@@ -308,7 +308,7 @@ export default function PremiumFooter() {
         </button>
       )}
 
-      <style jsx>{`
+      <style>{`
         @keyframes float {
           0%,
           100% {
