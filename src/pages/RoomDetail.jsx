@@ -12,25 +12,31 @@ const amenityIcons = {
   kitchen: "🍳",
 };
 
+function Toast({ message, type, onClose }) {
+  if (!message) return null;
+  return (
+    <div
+      className={`fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-xl shadow-lg font-bold text-lg animate-fadeInDown whitespace-pre-line ${
+        type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"
+      }`}
+    >
+      {message}
+      <button className="ml-4 text-white font-bold" onClick={onClose}>
+        ×
+      </button>
+    </div>
+  );
+}
+
 export default function RoomDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showBooking, setShowBooking] = useState(false);
-  const [bookingInfo, setBookingInfo] = useState({
-    name: "",
-    phone: "",
-    checkin: "",
-    checkout: "",
-    people: 1,
-    cccdImage: "",
-    note: "",
-  });
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState({ message: "", type: "success" });
+  const [galleryIdx, setGalleryIdx] = useState(0);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -41,439 +47,798 @@ export default function RoomDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="text-center py-8">Đang tải...</div>;
+  if (loading)
+    return <div className="text-center py-16 text-xl">Đang tải...</div>;
   if (!room)
     return (
-      <div className="text-center py-8 text-red-600 font-bold">
+      <div className="text-center py-16 text-red-600 font-bold text-xl">
         Không tìm thấy phòng.
       </div>
     );
+
+  // Gallery images
+  const gallery = [room.img, ...(room.images || [])];
+
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pb-10">
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ message: "", type: "success" })}
+      />
+      {/* Header + Gallery */}
+      <div className="relative w-full max-w-5xl mx-auto">
+        <div className="absolute top-4 left-4 z-10">
+          <button
+            className="bg-white/80 hover:bg-white px-4 py-2 rounded-full shadow text-blue-700 font-semibold flex items-center gap-2"
+            onClick={() => navigate("/")}
+          >
+            ← Quay lại
+          </button>
+        </div>
+        <div className="relative rounded-2xl overflow-hidden shadow-lg aspect-[16/7] bg-gray-200">
+          <img
+            src={gallery[galleryIdx]}
+            alt={room.name}
+            className="w-full h-full object-cover object-center transition-all duration-300"
+          />
+          <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/70 to-transparent p-6 flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white drop-shadow-lg">
+                {room.name}
+              </h1>
+              {room.isFeatured && (
+                <span className="ml-2 px-2 py-1 bg-yellow-300 text-yellow-900 rounded text-sm font-semibold shadow">
+                  Nổi bật
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-6 text-white text-lg font-bold drop-shadow">
+              <span>
+                {room.price?.toLocaleString()}{" "}
+                <span className="text-yellow-200">VNĐ</span>
+              </span>
+              <span>★ {room.rating}</span>
+              <span>{room.area}</span>
+            </div>
+          </div>
+          {/* Gallery thumbnails */}
+          {gallery.length > 1 && (
+            <div className="absolute bottom-4 right-4 flex gap-2 z-10">
+              {gallery.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt="thumb"
+                  className={`w-14 h-10 object-cover rounded border-2 cursor-pointer transition-all duration-200 ${
+                    galleryIdx === idx
+                      ? "border-blue-600 scale-110"
+                      : "border-white/70"
+                  }`}
+                  onClick={() => setGalleryIdx(idx)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Main content */}
+      <div className="w-full max-w-5xl mx-auto mt-8 flex flex-col md:flex-row gap-8 px-2 md:px-0">
+        {/* Info left */}
+        <div className="flex-1 min-w-0">
+          {/* Thông tin phòng */}
+          <div className="bg-white rounded-2xl shadow p-6 mb-6">
+            <div className="flex flex-wrap gap-4 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-700">Địa chỉ:</span>
+                <span>{room.location}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-700">Diện tích:</span>
+                <span>{room.areaSize} m²</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-700">Tối đa:</span>
+                <span>{room.maxPeople} người</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-gray-700">Lượt xem:</span>
+                <span>{room.views}</span>
+              </div>
+            </div>
+            <div className="mb-4 text-gray-700 leading-relaxed">
+              {room.description}
+            </div>
+            {/* Tiện nghi */}
+            <div className="mb-4">
+              <div className="font-semibold mb-2">Tiện nghi:</div>
+              <div className="flex flex-wrap gap-2">
+                {room.amenities?.length ? (
+                  room.amenities.map((a) => (
+                    <span
+                      key={a}
+                      className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 rounded px-3 py-1 text-base font-medium shadow-sm"
+                    >
+                      <span>{amenityIcons[a] || "✔️"}</span> {a}
+                    </span>
+                  ))
+                ) : (
+                  <span>Không có thông tin.</span>
+                )}
+              </div>
+            </div>
+            {/* Chủ phòng */}
+            <div className="flex items-center gap-3 mt-4">
+              {room.owner?.avatar && (
+                <img
+                  src={room.owner.avatar}
+                  alt={room.owner?.name}
+                  className="w-12 h-12 rounded-full border-2 border-blue-200 shadow"
+                />
+              )}
+              <div>
+                <div className="font-semibold text-gray-800">
+                  {room.owner?.name}
+                </div>
+                <a
+                  href={`tel:${room.owner?.phone}`}
+                  className="text-blue-700 hover:underline text-sm"
+                >
+                  {room.owner?.phone}
+                </a>
+              </div>
+            </div>
+          </div>
+          {/* Đánh giá */}
+          <div className="bg-white rounded-2xl shadow p-6 mb-6">
+            <div className="font-bold mb-3 text-blue-800 text-lg">
+              Đánh giá của khách thuê
+            </div>
+            {room.reviews?.length ? (
+              <ul className="space-y-4">
+                {room.reviews.map((r, idx) => (
+                  <li
+                    key={idx}
+                    className="flex gap-3 items-start bg-blue-50 rounded-xl p-3 border-l-4 border-blue-200"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-2xl">
+                      {r.avatar ? (
+                        <img
+                          src={r.avatar}
+                          alt={r.user}
+                          className="w-10 h-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        r.user?.[0]
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-blue-900 flex items-center gap-2">
+                        {r.user}{" "}
+                        <span className="text-yellow-500">★ {r.rating}</span>
+                      </div>
+                      <div className="text-gray-700 text-sm mt-1">
+                        {r.comment}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div>Chưa có đánh giá.</div>
+            )}
+          </div>
+        </div>
+        {/* Booking form right */}
+        <div className="w-full md:w-[380px] flex-shrink-0">
+          <div className="sticky top-24">
+            <div className="bg-white rounded-2xl shadow p-6">
+              {/* Đặt phòng ngay */}
+              <div className="font-bold text-blue-800 text-xl mb-4">
+                Đặt phòng ngay
+              </div>
+              {!showBooking ? (
+                <button
+                  className="w-full py-3 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-lg text-lg transition"
+                  onClick={() => setShowBooking(true)}
+                >
+                  Đặt phòng
+                </button>
+              ) : (
+                <BookingFullInfoForm
+                  room={room}
+                  onClose={() => setShowBooking(false)}
+                  setToast={setToast}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showContactModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full relative text-center">
+            <button
+              className="absolute top-2 right-2 text-2xl font-bold text-gray-500 hover:text-red-500"
+              onClick={() => setShowContactModal(false)}
+            >
+              ×
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-blue-800">
+              Đặt trước phòng tận nơi
+            </h2>
+            <ContactBookingForm
+              room={room}
+              onClose={() => setShowContactModal(false)}
+              setToast={setToast}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContactBookingForm({ room, onClose, setToast }) {
+  const [form, setForm] = React.useState({
+    name: "",
+    phone: "",
+    email: "",
+    note: "",
+    cccdImage: "",
+    dateOfBirth: "",
+    address: "",
+    gender: "",
+    occupation: "",
+  });
+  const [loading, setLoading] = React.useState(false);
+  const [errors, setErrors] = React.useState({});
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setBookingInfo((info) => ({ ...info, cccdImage: reader.result }));
+        setForm((f) => ({ ...f, cccdImage: reader.result }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Validate nâng cao
   const validate = () => {
     const errs = {};
-    if (
-      !bookingInfo.name.trim() ||
-      bookingInfo.name.trim().split(" ").length < 2 ||
-      /[^a-zA-ZÀ-ỹ\s]/.test(bookingInfo.name)
-    ) {
-      errs.name = "Họ tên phải có ít nhất 2 từ, không chứa số/ký tự đặc biệt.";
-    }
-    if (!/^0\d{9}$/.test(bookingInfo.phone)) {
+    if (!form.name.trim()) errs.name = "Vui lòng nhập họ tên";
+    if (!/^0\d{9}$/.test(form.phone))
       errs.phone = "Số điện thoại phải đủ 10 số, bắt đầu bằng 0.";
+    if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email))
+      errs.email = "Email không hợp lệ";
+    if (!form.cccdImage) errs.cccdImage = "Vui lòng upload ảnh CCCD";
+    if (!form.dateOfBirth) errs.dateOfBirth = "Vui lòng chọn ngày sinh";
+    if (!form.address.trim()) errs.address = "Vui lòng nhập địa chỉ";
+    if (!form.gender) errs.gender = "Vui lòng chọn giới tính";
+    // Validate nghề nghiệp
+    if (!form.occupation.trim()) {
+      errs.occupation = "Vui lòng nhập nghề nghiệp";
+    } else if (form.occupation.length < 2) {
+      errs.occupation = "Nghề nghiệp phải có ít nhất 2 ký tự";
+    } else if (form.occupation.length > 50) {
+      errs.occupation = "Nghề nghiệp tối đa 50 ký tự";
+    } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(form.occupation)) {
+      errs.occupation = "Nghề nghiệp chỉ được chứa chữ cái và khoảng trắng";
     }
-    if (!bookingInfo.checkin) {
-      errs.checkin = "Chọn ngày nhận phòng.";
-    }
-    if (!bookingInfo.checkout) {
-      errs.checkout = "Chọn ngày trả phòng.";
-    }
-    if (
-      bookingInfo.checkin &&
-      bookingInfo.checkout &&
-      bookingInfo.checkin > bookingInfo.checkout
-    ) {
-      errs.checkout = "Ngày trả phòng phải sau ngày nhận phòng.";
-    }
-    if (
-      !bookingInfo.people ||
-      bookingInfo.people < 1 ||
-      bookingInfo.people > room.maxPeople
-    ) {
-      errs.people = `Số người phải từ 1 đến ${room.maxPeople}.`;
-    }
-    if (!bookingInfo.cccdImage) {
-      errs.cccdImage = "Vui lòng chụp hoặc tải lên ảnh CCCD mặt trước.";
-    }
-    if (bookingInfo.note && bookingInfo.note.length > 200) {
+    if (form.note && form.note.length > 200)
       errs.note = "Ghi chú tối đa 200 ký tự.";
-    }
     return errs;
   };
 
-  // Đặt phòng
-  const handleBooking = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
-    setErrors({});
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
-    setIsLoading(true);
-    setTimeout(() => {
-      const now = new Date();
-      const timeStr = now.toLocaleString("vi-VN", { hour12: false });
-      setSuccessMsg(
-        `Đặt phòng thành công!\nThời gian đặt: ${timeStr}${
-          bookingInfo.note ? `\nGhi chú: ${bookingInfo.note}` : ""
-        }`
+    setLoading(true);
+    try {
+      // Lấy lại room mới nhất
+      const res = await axios.get(
+        `https://6882619c66a7eb81224e691d.mockapi.io/api/room/${room.id}`
       );
-      setShowBooking(false);
-      setBookingInfo({
-        name: "",
-        phone: "",
-        checkin: "",
-        checkout: "",
-        people: 1,
-        cccdImage: "",
-        note: "",
+      const currentRoom = res.data;
+      const newBooking = {
+        id: Date.now().toString(),
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        img: form.cccdImage, // Ảnh CCCD
+        note: form.note || "Đặt trước",
+        dateOfBirth: form.dateOfBirth,
+        address: form.address,
+        gender: form.gender,
+        occupation: form.occupation,
+        createdAt: new Date().toISOString(),
+      };
+      const updatedBookings = Array.isArray(currentRoom.bookings)
+        ? [...currentRoom.bookings, newBooking]
+        : [newBooking];
+      await axios.put(
+        `https://6882619c66a7eb81224e691d.mockapi.io/api/room/${room.id}`,
+        {
+          ...currentRoom,
+          bookings: updatedBookings,
+        }
+      );
+      setToast({
+        message: "Đặt trước thành công! Nhân viên sẽ liên hệ bạn sớm.",
+        type: "success",
       });
-      setIsLoading(false);
-      setTimeout(() => setSuccessMsg(""), 5000);
-    }, 1200);
+      onClose();
+    } catch {
+      setToast({
+        message: "Có lỗi khi lưu đặt trước. Vui lòng thử lại!",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-50">
-      <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-3xl">
-        <button
-          className="mb-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-blue-700 font-semibold flex items-center gap-2"
-          onClick={() => navigate("/")}
-        >
-          ← Quay lại trang chủ
-        </button>
-        <h1 className="text-3xl font-bold mb-4 text-blue-800 flex items-center gap-2">
-          {room.name}
-          {room.isFeatured && (
-            <span className="ml-2 px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-sm font-semibold">
-              Nổi bật
-            </span>
-          )}
-        </h1>
-        <div className="flex flex-col md:flex-row gap-6 mb-6">
-          <div className="flex-1">
-            <img
-              src={room.img}
-              alt={room.name}
-              className="w-full h-64 object-cover rounded-xl mb-2"
-            />
-            <div className="flex gap-2 mb-2">
-              {room.images?.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt="img"
-                  className="w-16 h-12 object-cover rounded"
-                />
-              ))}
-            </div>
-            {room.video && (
-              <video
-                controls
-                poster={room.poster}
-                className="w-full rounded-xl mt-2"
-              >
-                <source src={room.video} type="video/mp4" />
-                Trình duyệt không hỗ trợ video.
-              </video>
-            )}
-          </div>
-          <table className="table-auto w-full md:w-1/2 text-lg">
-            <tbody>
-              <tr>
-                <td className="font-semibold pr-4">Giá:</td>
-                <td className="text-blue-700 font-bold">
-                  {room.price?.toLocaleString()} VNĐ
-                </td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Khu vực:</td>
-                <td>{room.area}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Địa chỉ:</td>
-                <td>{room.location}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Diện tích:</td>
-                <td>{room.areaSize} m²</td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Số người tối đa:</td>
-                <td>{room.maxPeople}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Lượt xem:</td>
-                <td>{room.views}</td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Đánh giá:</td>
-                <td>
-                  <span className="text-yellow-500 font-bold">
-                    ★ {room.rating}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Tiện nghi:</td>
-                <td>
-                  {room.amenities?.map((a) => (
-                    <span
-                      key={a}
-                      className="inline-block bg-blue-100 rounded px-2 py-1 mr-1 mb-1 text-sm"
-                    >
-                      {amenityIcons[a] || a} {a}
-                    </span>
-                  ))}
-                </td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">Chủ phòng:</td>
-                <td>
-                  <div className="flex items-center gap-2">
-                    {room.owner?.avatar && (
-                      <img
-                        src={room.owner.avatar}
-                        alt={room.owner?.name}
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
-                    <span>{room.owner?.name}</span>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td className="font-semibold pr-4">SĐT:</td>
-                <td>
-                  <a
-                    href={`tel:${room.owner?.phone}`}
-                    className="text-blue-700 hover:underline"
-                  >
-                    {room.owner?.phone}
-                  </a>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="mb-4 text-gray-700">{room.description}</div>
-        {/* Đánh giá */}
-        <div className="mb-4">
-          <div className="font-bold mb-2">Đánh giá của khách thuê:</div>
-          {room.reviews?.length ? (
-            <ul className="space-y-2">
-              {room.reviews.map((r, idx) => (
-                <li
-                  key={idx}
-                  className="bg-gray-50 rounded p-2 border-l-4 border-blue-200"
-                >
-                  <div className="font-semibold">
-                    {r.user}{" "}
-                    <span className="text-yellow-500">★ {r.rating}</span>
-                  </div>
-                  <div>{r.comment}</div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div>Chưa có đánh giá.</div>
+    <form onSubmit={handleSubmit} className="space-y-4 text-left">
+      <div>
+        <label className="block font-semibold mb-1">Họ tên *</label>
+        <input
+          type="text"
+          className={`w-full px-3 py-2 border rounded ${
+            errors.name ? "border-red-500" : ""
+          }`}
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          placeholder="Nhập họ tên đầy đủ"
+        />
+        {errors.name && (
+          <div className="text-red-600 text-sm mt-1">{errors.name}</div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block font-semibold mb-1">Số điện thoại *</label>
+          <input
+            type="tel"
+            className={`w-full px-3 py-2 border rounded ${
+              errors.phone ? "border-red-500" : ""
+            }`}
+            value={form.phone}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            placeholder="0123456789"
+          />
+          {errors.phone && (
+            <div className="text-red-600 text-sm mt-1">{errors.phone}</div>
           )}
         </div>
-        {/* Nút đặt phòng và form đặt phòng */}
-        <div className="mt-6">
-          {!showBooking && (
-            <button
-              className="px-6 py-2 bg-blue-700 text-white rounded hover:bg-blue-800 w-full text-lg font-semibold"
-              onClick={() => setShowBooking(true)}
-            >
-              Đặt phòng ngay
-            </button>
-          )}
-          {showBooking && (
-            <form
-              className="bg-blue-50 rounded-xl p-4 mb-4 mt-4"
-              onSubmit={handleBooking}
-            >
-              <div className="font-bold mb-2 text-blue-800">
-                Thông tin đặt phòng
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold">Họ tên *</label>
-                  <input
-                    required
-                    type="text"
-                    className={`px-3 py-2 rounded border w-full focus:ring-2 focus:ring-blue-400 ${
-                      errors.name ? "border-red-500" : ""
-                    }`}
-                    placeholder="Nhập họ tên đầy đủ"
-                    value={bookingInfo.name}
-                    onChange={(e) =>
-                      setBookingInfo({ ...bookingInfo, name: e.target.value })
-                    }
-                  />
-                  {errors.name && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {errors.name}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="font-semibold">Số điện thoại *</label>
-                  <input
-                    required
-                    type="tel"
-                    className={`px-3 py-2 rounded border w-full focus:ring-2 focus:ring-blue-400 ${
-                      errors.phone ? "border-red-500" : ""
-                    }`}
-                    placeholder="Nhập số điện thoại"
-                    value={bookingInfo.phone}
-                    onChange={(e) =>
-                      setBookingInfo({ ...bookingInfo, phone: e.target.value })
-                    }
-                  />
-                  {errors.phone && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {errors.phone}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="font-semibold">Ngày nhận phòng *</label>
-                  <input
-                    required
-                    type="date"
-                    className={`px-3 py-2 rounded border w-full focus:ring-2 focus:ring-blue-400 ${
-                      errors.checkin ? "border-red-500" : ""
-                    }`}
-                    value={bookingInfo.checkin}
-                    onChange={(e) =>
-                      setBookingInfo({
-                        ...bookingInfo,
-                        checkin: e.target.value,
-                      })
-                    }
-                  />
-                  {errors.checkin && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {errors.checkin}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="font-semibold">Ngày trả phòng *</label>
-                  <input
-                    required
-                    type="date"
-                    className={`px-3 py-2 rounded border w-full focus:ring-2 focus:ring-blue-400 ${
-                      errors.checkout ? "border-red-500" : ""
-                    }`}
-                    value={bookingInfo.checkout}
-                    onChange={(e) =>
-                      setBookingInfo({
-                        ...bookingInfo,
-                        checkout: e.target.value,
-                      })
-                    }
-                  />
-                  {errors.checkout && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {errors.checkout}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="font-semibold">Số người *</label>
-                  <input
-                    required
-                    type="number"
-                    min={1}
-                    max={room.maxPeople}
-                    className={`px-3 py-2 rounded border w-full focus:ring-2 focus:ring-blue-400 ${
-                      errors.people ? "border-red-500" : ""
-                    }`}
-                    placeholder="Số người"
-                    value={bookingInfo.people}
-                    onChange={(e) =>
-                      setBookingInfo({ ...bookingInfo, people: e.target.value })
-                    }
-                  />
-                  {errors.people && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {errors.people}
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2 md:col-span-2">
-                  <label className="font-semibold">
-                    Ảnh CCCD mặt trước <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    required={!bookingInfo.cccdImage}
-                    onChange={handleFileChange}
-                  />
-                  {bookingInfo.cccdImage && (
-                    <img
-                      src={bookingInfo.cccdImage}
-                      alt="CCCD Preview"
-                      className="mt-2 w-40 rounded shadow border transition-opacity duration-300 opacity-100"
-                    />
-                  )}
-                  {errors.cccdImage && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {errors.cccdImage}
-                    </div>
-                  )}
-                </div>
-                <div className="md:col-span-2">
-                  <label className="font-semibold">Ghi chú (tuỳ chọn)</label>
-                  <textarea
-                    placeholder="Ghi chú (tối đa 200 ký tự)"
-                    className={`px-3 py-2 rounded border w-full focus:ring-2 focus:ring-blue-400 ${
-                      errors.note ? "border-red-500" : ""
-                    }`}
-                    value={bookingInfo.note}
-                    onChange={(e) =>
-                      setBookingInfo({ ...bookingInfo, note: e.target.value })
-                    }
-                    maxLength={200}
-                  />
-                  {errors.note && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {errors.note}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {errorMsg && (
-                <div className="text-red-600 font-semibold mt-2 mb-2">
-                  {errorMsg}
-                </div>
-              )}
-              <button
-                type="submit"
-                className={`mt-4 px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 w-full text-lg font-semibold transition-all duration-200 ${
-                  isLoading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-                disabled={isLoading}
-              >
-                {isLoading ? "Đang xử lý..." : "Xác nhận đặt phòng"}
-              </button>
-            </form>
-          )}
-          {successMsg && (
-            <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-green-500 text-white rounded-xl px-6 py-3 text-center font-bold text-lg shadow-lg z-50 animate-fadeInDown whitespace-pre-line">
-              {successMsg}
-            </div>
+
+        <div>
+          <label className="block font-semibold mb-1">Email *</label>
+          <input
+            type="email"
+            className={`w-full px-3 py-2 border rounded ${
+              errors.email ? "border-red-500" : ""
+            }`}
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            placeholder="example@email.com"
+          />
+          {errors.email && (
+            <div className="text-red-600 text-sm mt-1">{errors.email}</div>
           )}
         </div>
       </div>
-    </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block font-semibold mb-1">Ngày sinh *</label>
+          <input
+            type="date"
+            className={`w-full px-3 py-2 border rounded ${
+              errors.dateOfBirth ? "border-red-500" : ""
+            }`}
+            value={form.dateOfBirth}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, dateOfBirth: e.target.value }))
+            }
+          />
+          {errors.dateOfBirth && (
+            <div className="text-red-600 text-sm mt-1">
+              {errors.dateOfBirth}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block font-semibold mb-1">Giới tính *</label>
+          <select
+            className={`w-full px-3 py-2 border rounded ${
+              errors.gender ? "border-red-500" : ""
+            }`}
+            value={form.gender}
+            onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
+          >
+            <option value="">Chọn giới tính</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+            <option value="Khác">Khác</option>
+          </select>
+          {errors.gender && (
+            <div className="text-red-600 text-sm mt-1">{errors.gender}</div>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label className="block font-semibold mb-1">Địa chỉ *</label>
+        <input
+          type="text"
+          className={`w-full px-3 py-2 border rounded ${
+            errors.address ? "border-red-500" : ""
+          }`}
+          value={form.address}
+          onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+          placeholder="Nhập địa chỉ hiện tại"
+        />
+        {errors.address && (
+          <div className="text-red-600 text-sm mt-1">{errors.address}</div>
+        )}
+      </div>
+
+      <div>
+        <label className="block font-semibold mb-1">Nghề nghiệp *</label>
+        <input
+          type="text"
+          className={`w-full px-3 py-2 border rounded ${
+            errors.occupation ? "border-red-500" : ""
+          }`}
+          value={form.occupation}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, occupation: e.target.value }))
+          }
+          placeholder="VD: Sinh viên, Nhân viên văn phòng..."
+        />
+        {errors.occupation && (
+          <div className="text-red-600 text-sm mt-1">{errors.occupation}</div>
+        )}
+      </div>
+
+      <div>
+        <label className="block font-semibold mb-1">Ảnh CCCD mặt trước *</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className={`w-full px-3 py-2 border rounded ${
+            errors.cccdImage ? "border-red-500" : ""
+          }`}
+        />
+        {form.cccdImage && (
+          <img
+            src={form.cccdImage}
+            alt="CCCD Preview"
+            className="mt-2 w-32 h-20 object-cover rounded shadow border"
+          />
+        )}
+        {errors.cccdImage && (
+          <div className="text-red-600 text-sm mt-1">{errors.cccdImage}</div>
+        )}
+      </div>
+
+      <div>
+        <label className="block font-semibold mb-1">Ghi chú</label>
+        <textarea
+          className={`w-full px-3 py-2 border rounded ${
+            errors.note ? "border-red-500" : ""
+          }`}
+          value={form.note}
+          onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+          maxLength={200}
+          placeholder="Ghi chú thêm (tối đa 200 ký tự)"
+          rows={3}
+        />
+        {errors.note && (
+          <div className="text-red-600 text-sm mt-1">{errors.note}</div>
+        )}
+      </div>
+
+      <div className="flex gap-2 mt-4">
+        <button
+          type="submit"
+          className="flex-1 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded font-semibold"
+          disabled={loading}
+        >
+          {loading ? "Đang gửi..." : "Xác nhận đặt trước"}
+        </button>
+        <button
+          type="button"
+          className="flex-1 py-2 bg-gray-200 rounded font-semibold"
+          onClick={onClose}
+        >
+          Huỷ
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function BookingFullInfoForm({ room, onClose, setToast }) {
+  const [form, setForm] = React.useState({
+    name: "",
+    phone: "",
+    email: "",
+    img: "",
+    note: "",
+    dateOfBirth: "",
+    address: "",
+    gender: "",
+    occupation: "",
+  });
+  const [loading, setLoading] = React.useState(false);
+  const [errors, setErrors] = React.useState({});
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm((f) => ({ ...f, img: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const validate = () => {
+    const errs = {};
+    if (!form.name.trim()) errs.name = "Vui lòng nhập họ tên";
+    if (!/^0\d{9}$/.test(form.phone))
+      errs.phone = "Số điện thoại phải đủ 10 số, bắt đầu bằng 0.";
+    if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email))
+      errs.email = "Email không hợp lệ";
+    if (!form.img) errs.img = "Vui lòng upload ảnh đại diện";
+    if (!form.dateOfBirth) errs.dateOfBirth = "Vui lòng chọn ngày sinh";
+    if (!form.address.trim()) errs.address = "Vui lòng nhập địa chỉ";
+    if (!form.gender) errs.gender = "Vui lòng chọn giới tính";
+    if (!form.occupation.trim()) {
+      errs.occupation = "Vui lòng nhập nghề nghiệp";
+    } else if (form.occupation.length < 2) {
+      errs.occupation = "Nghề nghiệp phải có ít nhất 2 ký tự";
+    } else if (form.occupation.length > 50) {
+      errs.occupation = "Nghề nghiệp tối đa 50 ký tự";
+    } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(form.occupation)) {
+      errs.occupation = "Nghề nghiệp chỉ được chứa chữ cái và khoảng trắng";
+    }
+    if (form.note && form.note.length > 200)
+      errs.note = "Ghi chú tối đa 200 ký tự.";
+    return errs;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setLoading(true);
+    try {
+      // Lấy lại room mới nhất
+      const res = await axios.get(
+        `https://6882619c66a7eb81224e691d.mockapi.io/api/room/${room.id}`
+      );
+      const currentRoom = res.data;
+      const newBooking = {
+        id: Date.now().toString(),
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+        img: form.img,
+        note: "Đặt phòng",
+        dateOfBirth: form.dateOfBirth,
+        address: form.address,
+        gender: form.gender,
+        occupation: form.occupation,
+        createdAt: new Date().toISOString(),
+      };
+      const updatedBookings = Array.isArray(currentRoom.bookings)
+        ? [...currentRoom.bookings, newBooking]
+        : [newBooking];
+      await axios.put(
+        `https://6882619c66a7eb81224e691d.mockapi.io/api/room/${room.id}`,
+        {
+          ...currentRoom,
+          bookings: updatedBookings,
+        }
+      );
+      setToast({ message: "Đặt phòng thành công!", type: "success" });
+      onClose();
+    } catch {
+      setToast({ message: "Có lỗi khi lưu đặt phòng!", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 text-left">
+      <div>
+        <label className="block font-semibold mb-1">Họ tên *</label>
+        <input
+          type="text"
+          className={`w-full px-3 py-2 border rounded ${
+            errors.name ? "border-red-500" : ""
+          }`}
+          value={form.name}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          placeholder="Nhập họ tên đầy đủ"
+        />
+        {errors.name && (
+          <div className="text-red-600 text-sm mt-1">{errors.name}</div>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block font-semibold mb-1">Số điện thoại *</label>
+          <input
+            type="tel"
+            className={`w-full px-3 py-2 border rounded ${
+              errors.phone ? "border-red-500" : ""
+            }`}
+            value={form.phone}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            placeholder="0123456789"
+          />
+          {errors.phone && (
+            <div className="text-red-600 text-sm mt-1">{errors.phone}</div>
+          )}
+        </div>
+        <div>
+          <label className="block font-semibold mb-1">Email *</label>
+          <input
+            type="email"
+            className={`w-full px-3 py-2 border rounded ${
+              errors.email ? "border-red-500" : ""
+            }`}
+            value={form.email}
+            onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+            placeholder="example@email.com"
+          />
+          {errors.email && (
+            <div className="text-red-600 text-sm mt-1">{errors.email}</div>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block font-semibold mb-1">Ngày sinh *</label>
+          <input
+            type="date"
+            className={`w-full px-3 py-2 border rounded ${
+              errors.dateOfBirth ? "border-red-500" : ""
+            }`}
+            value={form.dateOfBirth}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, dateOfBirth: e.target.value }))
+            }
+          />
+          {errors.dateOfBirth && (
+            <div className="text-red-600 text-sm mt-1">
+              {errors.dateOfBirth}
+            </div>
+          )}
+        </div>
+        <div>
+          <label className="block font-semibold mb-1">Giới tính *</label>
+          <select
+            className={`w-full px-3 py-2 border rounded ${
+              errors.gender ? "border-red-500" : ""
+            }`}
+            value={form.gender}
+            onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
+          >
+            <option value="">Chọn giới tính</option>
+            <option value="Nam">Nam</option>
+            <option value="Nữ">Nữ</option>
+            <option value="Khác">Khác</option>
+          </select>
+          {errors.gender && (
+            <div className="text-red-600 text-sm mt-1">{errors.gender}</div>
+          )}
+        </div>
+      </div>
+      <div>
+        <label className="block font-semibold mb-1">Địa chỉ *</label>
+        <input
+          type="text"
+          className={`w-full px-3 py-2 border rounded ${
+            errors.address ? "border-red-500" : ""
+          }`}
+          value={form.address}
+          onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+          placeholder="Nhập địa chỉ hiện tại"
+        />
+        {errors.address && (
+          <div className="text-red-600 text-sm mt-1">{errors.address}</div>
+        )}
+      </div>
+      <div>
+        <label className="block font-semibold mb-1">Nghề nghiệp *</label>
+        <input
+          type="text"
+          className={`w-full px-3 py-2 border rounded ${
+            errors.occupation ? "border-red-500" : ""
+          }`}
+          value={form.occupation}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, occupation: e.target.value }))
+          }
+          placeholder="VD: Sinh viên, Nhân viên văn phòng..."
+        />
+        {errors.occupation && (
+          <div className="text-red-600 text-sm mt-1">{errors.occupation}</div>
+        )}
+      </div>
+      <div>
+        <label className="block font-semibold mb-1">Ảnh đại diện *</label>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className={`w-full px-3 py-2 border rounded ${
+            errors.img ? "border-red-500" : ""
+          }`}
+        />
+        {form.img && (
+          <img
+            src={form.img}
+            alt="Avatar Preview"
+            className="mt-2 w-32 h-20 object-cover rounded shadow border"
+          />
+        )}
+        {errors.img && (
+          <div className="text-red-600 text-sm mt-1">{errors.img}</div>
+        )}
+      </div>
+      <div>
+        <label className="block font-semibold mb-1">Ghi chú</label>
+        <textarea
+          className={`w-full px-3 py-2 border rounded ${
+            errors.note ? "border-red-500" : ""
+          }`}
+          value={form.note}
+          onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+          maxLength={200}
+          placeholder="Ghi chú thêm (tối đa 200 ký tự)"
+          rows={3}
+        />
+        {errors.note && (
+          <div className="text-red-600 text-sm mt-1">{errors.note}</div>
+        )}
+      </div>
+      <div className="flex gap-2 mt-4">
+        <button
+          type="submit"
+          className="flex-1 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded font-semibold"
+          disabled={loading}
+        >
+          {loading ? "Đang gửi..." : "Xác nhận đặt phòng"}
+        </button>
+        <button
+          type="button"
+          className="flex-1 py-2 bg-gray-200 rounded font-semibold"
+          onClick={onClose}
+        >
+          Huỷ
+        </button>
+      </div>
+    </form>
   );
 }

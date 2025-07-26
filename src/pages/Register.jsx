@@ -19,7 +19,8 @@ export default function Register() {
       alert("Đăng ký thành công!");
       // Có thể chuyển hướng sang trang đăng nhập nếu muốn
       // window.location.href = "/login";
-    } catch (error) {
+      // Đã xử lý lỗi 'error' is defined but never used bằng cách xóa biến nếu không dùng
+    } catch {
       alert("Đăng ký thất bại! Vui lòng thử lại.");
     }
   };

@@ -19,3 +19,33 @@ export const deleteUser = (id) => axios.delete(`${BASE_URL}/users/${id}`);
 
 export const loginUser = (name, password) =>
   axios.get(`${BASE_URL}/users`, { params: { name, password } });
+
+// Thao tác với bookings trong room
+export const addBookingToRoom = async (roomId, newBooking) => {
+  const res = await getRoom(roomId);
+  const room = res.data;
+  const updatedBookings = [...(room.bookings || []), newBooking];
+  return updateRoom(roomId, { ...room, bookings: updatedBookings });
+};
+
+export const updateBookingInRoom = async (
+  roomId,
+  bookingId,
+  updatedBooking
+) => {
+  const res = await getRoom(roomId);
+  const room = res.data;
+  const updatedBookings = (room.bookings || []).map((b) =>
+    b.id === bookingId ? { ...b, ...updatedBooking } : b
+  );
+  return updateRoom(roomId, { ...room, bookings: updatedBookings });
+};
+
+export const deleteBookingInRoom = async (roomId, bookingId) => {
+  const res = await getRoom(roomId);
+  const room = res.data;
+  const updatedBookings = (room.bookings || []).filter(
+    (b) => b.id !== bookingId
+  );
+  return updateRoom(roomId, { ...room, bookings: updatedBookings });
+};
