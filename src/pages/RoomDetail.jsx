@@ -59,7 +59,6 @@ export default function RoomDetail() {
   // Gallery images
   const gallery = [room.img, ...(room.images || [])];
 
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white pb-10">
       <Toast
@@ -585,16 +584,7 @@ function BookingFullInfoForm({ room, onClose, setToast }) {
   const [loading, setLoading] = React.useState(false);
   const [errors, setErrors] = React.useState({});
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm((f) => ({ ...f, img: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // XÓA handleFileChange
 
   const validate = () => {
     const errs = {};
@@ -603,7 +593,7 @@ function BookingFullInfoForm({ room, onClose, setToast }) {
       errs.phone = "Số điện thoại phải đủ 10 số, bắt đầu bằng 0.";
     if (!form.email.trim() || !/^\S+@\S+\.\S+$/.test(form.email))
       errs.email = "Email không hợp lệ";
-    if (!form.img) errs.img = "Vui lòng upload ảnh đại diện";
+    if (!form.img) errs.img = "Vui lòng nhập link ảnh đại diện";
     if (!form.dateOfBirth) errs.dateOfBirth = "Vui lòng chọn ngày sinh";
     if (!form.address.trim()) errs.address = "Vui lòng nhập địa chỉ";
     if (!form.gender) errs.gender = "Vui lòng chọn giới tính";
@@ -640,7 +630,7 @@ function BookingFullInfoForm({ room, onClose, setToast }) {
         name: form.name,
         phone: form.phone,
         email: form.email,
-        img: form.img,
+        img: form.img, // Lưu link ảnh
         note: "Đặt phòng",
         dateOfBirth: form.dateOfBirth,
         address: form.address,
@@ -787,22 +777,20 @@ function BookingFullInfoForm({ room, onClose, setToast }) {
         )}
       </div>
       <div>
-        <label className="block font-semibold mb-1">Ảnh đại diện *</label>
+        <label className="block font-semibold mb-1">Link ảnh đại diện *</label>
         <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
+          type="text"
           className={`w-full px-3 py-2 border rounded ${
             errors.img ? "border-red-500" : ""
           }`}
+          value={form.img}
+          onChange={(e) => setForm((f) => ({ ...f, img: e.target.value }))}
+          placeholder="Dán link ảnh (https://...)"
         />
-        {form.img && (
-          <img
-            src={form.img}
-            alt="Avatar Preview"
-            className="mt-2 w-32 h-20 object-cover rounded shadow border"
-          />
-        )}
+        <div className="text-xs text-gray-500 mt-1">
+          Bạn có thể upload ảnh lên Imgur, Google Drive, Bing... rồi dán link
+          vào đây.
+        </div>
         {errors.img && (
           <div className="text-red-600 text-sm mt-1">{errors.img}</div>
         )}
