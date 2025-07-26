@@ -1,18 +1,27 @@
 import React, { useState } from "react";
+import { createUser } from "../utils/api";
 
 export default function Register() {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [avatar, setAvatar] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirm) {
       alert("Mật khẩu xác nhận không khớp!");
       return;
     }
-    // TODO: Gọi API đăng ký
-    alert("Đăng ký thành công (demo)");
+    try {
+      await createUser({ name: username, email, avatar, password });
+      alert("Đăng ký thành công!");
+      // Có thể chuyển hướng sang trang đăng nhập nếu muốn
+      // window.location.href = "/login";
+    } catch (error) {
+      alert("Đăng ký thất bại! Vui lòng thử lại.");
+    }
   };
 
   return (
@@ -33,6 +42,28 @@ export default function Register() {
             className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1 font-medium text-gray-700">Email</label>
+          <input
+            type="email"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1 font-medium text-gray-700">
+            Ảnh đại diện (avatar URL)
+          </label>
+          <input
+            type="text"
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={avatar}
+            onChange={(e) => setAvatar(e.target.value)}
             required
           />
         </div>
